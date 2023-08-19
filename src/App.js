@@ -11,6 +11,7 @@ import {
 } from "./Appstyle";
 import { BASE_URL } from "./constants/BASE_URL";
 import { AUTH_TOKEN } from "./constants/AUTH_TOKEN";
+import { wait } from "@testing-library/user-event/dist/utils";
 
 function App() {
   const [usuarios, setUsuarios] = useState([]);
@@ -23,16 +24,17 @@ function App() {
     getUsuarios();
   }, []);
 
+  useEffect(()=>{
+    pesquisaUsuario(pesquisa)
+  }, [pesquisa])
+
   const getUsuarios = () => {
     axios
-      .get(
-        BASE_URL,
-        {
-          headers: {
-            Authorization: AUTH_TOKEN,
-          },
-        }
-      )
+      .get(BASE_URL, {
+        headers: {
+          Authorization: AUTH_TOKEN,
+        },
+      })
       .then((res) => {
         setUsuarios(res.data);
       })
@@ -41,8 +43,22 @@ function App() {
       });
   };
 
-  const pesquisaUsuario = (pesquisa) => {
-   
+  const pesquisaUsuario = async (pesquisa) => {
+    console.log('pesquisa', pesquisa)
+    try {
+      const resp = await axios.get(
+        `${BASE_URL}/search?name=${pesquisa.nome}&email=${pesquisa.email}`,
+        {
+          headers: {
+            Authorization: AUTH_TOKEN,
+          },
+        }
+      );
+      resp.data.length ? setUsuarios(resp.data) : getUsuarios()
+      console.log(resp.data)
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const onChangeName = (e) => {
@@ -59,16 +75,15 @@ function App() {
       email,
     };
     setPesquisa(novaPesquisa);
-   
-    setNome("")
-    setEmail("")
-    
+
+    setNome("");
+    setEmail("");
   };
 
   const onClickVoltar = () => {
     getUsuarios();
-    setPageFlow(1)
-  }
+    setPageFlow(1);
+  };
 
   return (
     <div>
@@ -104,7 +119,6 @@ function App() {
                   Cadastrar
                 </ButtonCadastro>
               )}
-              
             </ContainerBarra>
             {usuarios.map((usuario) => {
               return (
@@ -119,7 +133,6 @@ function App() {
             })}
           </>
         )}
-        
       </ContainerPrincipal>
     </div>
   );
